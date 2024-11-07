@@ -4,8 +4,10 @@
 #define LED_COUNT	300
 
 #define TOP_R		 60
-#define MAIN_R		110 
-#define MAIN_L		160
+#define DESKLAMP_R	130 
+#define DESKLAMP_L	150
+#define DESKLAMP2_R	 75 
+#define DESKLAMP2_L	100
 #define TOP_L		173
 #define BOTTOM_L	228
 
@@ -26,6 +28,7 @@ int chunkSize;
 int chunkOffCount;
 
 int shouldAnimateTop = 0;
+int animationChunkSize = 1;
 int animationDuration = 0;
 
 // CONTROL
@@ -64,7 +67,7 @@ void setLEDSection(int first, int last) {
     int j = 0;
     int isOn = 0;
 
-    for (i = last-1; i >= first; i--) {
+    for (i = first; i < last+1; i++) {
 	if (chunkOffCount == 0) {
 	    isOn = 1;
 	} else if (j == chunkOffCount) {
@@ -80,7 +83,11 @@ void setLEDSection(int first, int last) {
 	} else {
 	    leds[i] = CRGB(0, 0, 0);
 	}
-	if (animationDuration != 0) {
+	if (animationDuration == 0) {
+	    continue;
+	}
+
+	if (i % animationChunkSize == 0) {
 	    delay(animationDuration);
 	    FastLED.show();
 	}
@@ -98,7 +105,8 @@ void allOff() {
 
 void setTopAnimation() {
     if (shouldAnimateTop == 0) return;
-    animationDuration = 1;
+    animationDuration = 2;
+    animationChunkSize = 3;
 }
 
 void changeColor(int newColor) {
@@ -171,7 +179,8 @@ void applyAll() {
 
 void applyDesklamp() {
     resetChunks();
-    setLEDSection(MAIN_R, MAIN_L);
+    setLEDSection(DESKLAMP2_R, DESKLAMP2_L);
+    setLEDSection(DESKLAMP_R, DESKLAMP_L);
 }
 
 void applyTop() {
@@ -219,12 +228,15 @@ void redDesklamp() {
 
 void warm() {
     setWarm();
+    changeBrightness(0.3);
+    setChunks(2, 1);
     applyAll();
 }
 
 void warmWithDesklamp() {
     setWarm();
     changeBrightness(0.2);
+    setChunks(2, 1);
     applyAll();
 
     setTopAnimation();
@@ -252,7 +264,7 @@ void coldWithDesklamp() {
 
 void lowRed() {
     setDarkRed();
-    setChunks(10, 9);
+    setChunks(20, 19);
     applyTop();
     applyRight();
     applyBottom();
