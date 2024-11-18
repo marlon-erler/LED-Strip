@@ -152,6 +152,8 @@ void setWhite() {
   r = 255;
   g = 255;
   b = 255;
+
+  resetGradient();
 }
 
 void setCold() {
@@ -249,16 +251,8 @@ void standard(int withDesklamp) {
 }
 
 void setSunset() {
-  setBrightness(0.3);
+  resetBrightness();
   resetChunks();
-
-  r = 0;
-  g = 255;
-  b = 0;
-  r2 = 0;
-  g2 = 0;
-  b2 = 255;
-  setLEDSection(80, 140);
 }
 
 void whiteDesklamp() {
@@ -266,8 +260,9 @@ void whiteDesklamp() {
   applyDesklamp();
 }
 
-void lowRed() {
+  void lowRed() {
   setDarkRed();
+  resetBrightness();
   setChunks(20, 19);
   applyTop();
   applyRight();
