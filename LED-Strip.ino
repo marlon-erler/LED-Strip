@@ -68,32 +68,48 @@ void setup() {
 
 // UTIL
 void setLEDSection(int first, int last) {
-  int i;
+  int ledNumber;
+  int ledNumberInChunk = 0;
+  float iterationCount = 0;
 
-  int j = 0;
   int isOn = 0;
 
-  for (i = first; i < last + 1; i++) {
+  float rSpan = r - r2;
+  float gSpan = g - g2;
+  float bSpan = b - b2;
+
+  int stepCount = last - first;
+  float rDifferencePerStep = rSpan / stepCount;
+  float gDifferencePerStep = gSpan / stepCount;
+  float bDifferencePerStep = bSpan / stepCount;
+
+  for (ledNumber = first; ledNumber < last + 1; ledNumber++) {
     if (chunkOffCount == 0) {
       isOn = 1;
-    } else if (j == chunkOffCount) {
+    } else if (ledNumberInChunk == chunkOffCount) {
       isOn = 1;
-    } else if (j == chunkSize) {
+    } else if (ledNumberInChunk == chunkSize) {
       isOn = 0;
-      j = 0;
+      ledNumberInChunk = 0;
     }
-    j++;
+    ledNumberInChunk++;
+
+    float currentR = r - iterationCount * rDifferencePerStep;
+    float currentG = g - iterationCount * gDifferencePerStep;
+    float currentB = b - iterationCount * bDifferencePerStep;
+    iterationCount++;
 
     if (isOn == 1) {
-      leds[i] = CRGB(r * brightnessFactor, g * brightnessFactor, b * brightnessFactor);
+      leds[ledNumber] = CRGB(currentR * brightnessFactor, currentG * brightnessFactor, currentB * brightnessFactor);
     } else {
-      leds[i] = CRGB(0, 0, 0);
+      leds[ledNumber] = CRGB(0, 0, 0);
     }
+
     if (animationDuration == 0) {
       continue;
     }
 
-    if (i % animationChunkSize == 0) {
+    if (ledNumber % animationChunkSize == 0) {
       delay(animationDuration);
       FastLED.show();
     }
@@ -142,24 +158,32 @@ void setCold() {
   r = 150;
   g = 250;
   b = 255;
+
+  resetGradient();
 }
 
 void setWarm() {
   r = 255;
   g = 50;
   b = 0;
+
+  resetGradient();
 }
 
 void setRed() {
   r = 255;
   g = 0;
   b = 0;
+
+  resetGradient();
 }
 
 void setDarkRed() {
   r = 1;
   g = 0;
   b = 0;
+
+  resetGradient();
 }
 
 // BRIGHTNESS
@@ -190,6 +214,7 @@ void applyDesklamp() {
   resetChunks();
   resetBrightness();
   setTopAnimation();
+
   setLEDSection(DESKLAMP2_R, DESKLAMP2_L);
   setLEDSection(DESKLAMP_R, DESKLAMP_L);
 }
@@ -203,7 +228,7 @@ void applyBottom() {
 }
 
 void applyLeft() {
-  setLEDSection(TOP_L, BOTTOM_L); 
+  setLEDSection(TOP_L, BOTTOM_L);
 }
 
 void applyRight() {
@@ -212,7 +237,7 @@ void applyRight() {
 
 // PRESETS
 void standard(int withDesklamp) {
-  float mainBrightness = withDesklamp == 1 ? 0.2 : 0.3;
+  float mainBrightness = withDesklamp == 1 ? 0.1 : 0.3;
 
   setBrightness(mainBrightness);
   setChunks(2, 1);
@@ -221,6 +246,19 @@ void standard(int withDesklamp) {
   if (withDesklamp == 1) {
     applyDesklamp();
   }
+}
+
+void setSunset() {
+  setBrightness(0.3);
+  resetChunks();
+
+  r = 0;
+  g = 255;
+  b = 0;
+  r2 = 0;
+  g2 = 0;
+  b2 = 255;
+  setLEDSection(80, 140);
 }
 
 void whiteDesklamp() {
@@ -252,6 +290,8 @@ void redWithDesklamp() {
 
 // LOOP
 void loop() {
+  setSunset();
+  return;
   if (digitalRead(BUTTON) == 0) {
     if (shouldIgnoreButton == 0) {
       isDesklampOn = isDesklampOn == 0 ? 1 : 0;
