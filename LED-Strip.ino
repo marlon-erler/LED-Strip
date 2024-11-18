@@ -134,12 +134,6 @@ void setWhite() {
   b = 255;
 }
 
-void setWarmWhite() {
-  r = 255;
-  g = 80;
-  b = 10;
-}
-
 void setCold() {
   r = 150;
   g = 250;
@@ -206,12 +200,6 @@ void applyLeft() {
 
 void applyRight() {
   setLEDSection(0, TOP_R);
-}
-
-void applyExceptTop() {
-  applyLeft();
-  applyRight();
-  applyBottom();
 }
 
 // PRESETS
