@@ -23,6 +23,9 @@ CRGB leds[LED_COUNT];
 int r;
 int g;
 int b;
+int r2;
+int g2;
+int b2;
 
 int chunkSize;
 int chunkOffCount;
@@ -39,7 +42,7 @@ int isLampOn = 0;
 #define COLOR_COLD 1
 #define COLOR_WARM 2
 #define COLOR_RED 3
-int color = COLOR_RED;
+int color = COLOR_WARM;
 
 int shouldIgnoreButton = 0;
 int shouldIgnorePin = 0;
@@ -101,6 +104,12 @@ void allOff() {
   b = 0;
 
   setLEDSection(0, LED_COUNT);
+}
+
+void resetGradient() {
+  r2 = r;
+  g2 = g;
+  b2 = b;
 }
 
 void setTopAnimation() {
@@ -199,7 +208,7 @@ void applyRight() {
   setLEDSection(0, TOP_R);
 }
 
-void applyAllLowerGroups() {
+void applyExceptTop() {
   applyLeft();
   applyRight();
   applyBottom();
@@ -208,11 +217,6 @@ void applyAllLowerGroups() {
 // PRESETS
 void whiteDesklamp() {
   setWhite();
-  applyDesklamp();
-}
-
-void warmDesklamp() {
-  setWarmWhite();
   applyDesklamp();
 }
 
