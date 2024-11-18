@@ -121,14 +121,9 @@ void allOff() {
   r = 0;
   g = 0;
   b = 0;
+  resetGradient();
 
   setLEDSection(0, LED_COUNT);
-}
-
-void resetGradient() {
-  r2 = r;
-  g2 = g;
-  b2 = b;
 }
 
 void setTopAnimation() {
@@ -145,47 +140,6 @@ void setColor(int newColor) {
   color = newColor;
   didChange = 1;
   shouldIgnorePin = 1;
-}
-
-// COLORS
-void setWhite() {
-  r = 255;
-  g = 255;
-  b = 255;
-
-  resetGradient();
-}
-
-void setCold() {
-  r = 150;
-  g = 250;
-  b = 255;
-
-  resetGradient();
-}
-
-void setWarm() {
-  r = 255;
-  g = 50;
-  b = 0;
-
-  resetGradient();
-}
-
-void setRed() {
-  r = 255;
-  g = 0;
-  b = 0;
-
-  resetGradient();
-}
-
-void setDarkRed() {
-  r = 1;
-  g = 0;
-  b = 0;
-
-  resetGradient();
 }
 
 // BRIGHTNESS
@@ -205,6 +159,63 @@ void setChunks(int size, int off) {
 
 void resetChunks() {
   setChunks(1, 0);
+}
+
+// GRADIENT
+void resetGradient() {
+  r2 = r;
+  g2 = g;
+  b2 = b;
+}
+
+void flipGradient() {
+  int r2Old = r2;
+  int g2Old = g2;
+  int b2Old = b2;
+
+  r2 = r;
+  g2 = g;
+  b2 = b;
+
+  r = r2Old;
+  g = g2Old;
+  b = b2Old;
+}
+
+// COLORS
+void setWhite() {
+  r = 255;
+  g = 255;
+  b = 255;
+  resetGradient();
+}
+
+void setCold() {
+  r = 150;
+  g = 250;
+  b = 255;
+  resetGradient();
+}
+
+void setWarm() {
+  r = 255;
+  g = 50;
+  b = 0;
+  resetGradient();
+}
+
+void setRed() {
+  r = 255;
+  g = 0;
+  b = 0;
+  resetGradient();
+}
+
+void setDarkRed() {
+  r = 1;
+  g = 0;
+  b = 0;
+  resetGradient();
 }
 
 // RANGES
@@ -239,6 +250,7 @@ void applyRight() {
 
 // PRESETS
 void standard(int withDesklamp) {
+  resetGradient();
   float mainBrightness = withDesklamp == 1 ? 0.1 : 0.3;
 
   setBrightness(mainBrightness);
@@ -252,7 +264,35 @@ void standard(int withDesklamp) {
 
 void setSunset() {
   resetBrightness();
-  resetChunks();
+  setChunks(2, 1);
+
+  int rTop = 250;
+  int gTop = 25;
+  int bTop = 0;
+
+  int rBottom = 20;
+  int gBottom = 0;
+  int bBottom = 10;
+
+  r = rTop;
+  g = gTop;
+  b = bTop;
+  resetGradient();
+  applyTop();
+
+  r2 = rBottom;
+  g2 = gBottom;
+  b2 = bBottom;
+  applyLeft();
+
+  flipGradient();
+  applyRight();
+
+  r = rBottom;
+  g = gBottom;
+  b = bBottom;
+  resetGradient();
+  applyBottom();
 }
 
 void whiteDesklamp() {
@@ -260,7 +300,7 @@ void whiteDesklamp() {
   applyDesklamp();
 }
 
-  void lowRed() {
+void lowRed() {
   setDarkRed();
   resetBrightness();
   setChunks(20, 19);
@@ -285,8 +325,6 @@ void redWithDesklamp() {
 
 // LOOP
 void loop() {
-  setSunset();
-  return;
   if (digitalRead(BUTTON) == 0) {
     if (shouldIgnoreButton == 0) {
       isDesklampOn = isDesklampOn == 0 ? 1 : 0;
@@ -314,7 +352,6 @@ void loop() {
   }
 
   if (didChange == 0) return;
-
   allOff();
 
   switch (color) {
@@ -326,8 +363,7 @@ void loop() {
       standard(isDesklampOn);
       break;
     case COLOR_WARM:
-      setWarm();
-      standard(isDesklampOn);
+      setSunset();
       break;
     case COLOR_RED:
       if (isDesklampOn == 1) {
