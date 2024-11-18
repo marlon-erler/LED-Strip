@@ -20,12 +20,15 @@
 CRGB leds[LED_COUNT];
 
 // VARIABLES
-int r;
-int g;
-int b;
-int r2;
-int g2;
-int b2;
+float r;
+float g;
+float b;
+
+float r2;
+float g2;
+float b2;
+
+float brightnessFactor;
 
 int chunkSize;
 int chunkOffCount;
@@ -36,7 +39,7 @@ int animationDuration = 0;
 
 // CONTROL
 int didChange = 1;
-int isLampOn = 0;
+int isDesklampOn = 0;
 
 #define COLOR_WHITE 0
 #define COLOR_COLD 1
@@ -82,7 +85,7 @@ void setLEDSection(int first, int last) {
     j++;
 
     if (isOn == 1) {
-      leds[i] = CRGB(r, g, b);
+      leds[i] = CRGB(r * brightnessFactor, g * brightnessFactor, b * brightnessFactor);
     } else {
       leds[i] = CRGB(0, 0, 0);
     }
@@ -118,7 +121,7 @@ void setTopAnimation() {
   animationChunkSize = 3;
 }
 
-void changeColor(int newColor) {
+void setColor(int newColor) {
   if (color == newColor || shouldIgnorePin == 1) {
     return;
   }
@@ -127,6 +130,7 @@ void changeColor(int newColor) {
   didChange = 1;
   shouldIgnorePin = 1;
 }
+
 // COLORS
 void setWhite() {
   r = 255;
@@ -158,21 +162,23 @@ void setDarkRed() {
   b = 0;
 }
 
-void changeBrightness(float factor) {
-  r *= factor;
-  g *= factor;
-  b *= factor;
+// BRIGHTNESS
+void setBrightness(float factor) {
+  brightnessFactor = factor;
+}
+
+void resetBrightness() {
+  setBrightness(1);
 }
 
 // CHUNKS
-void resetChunks() {
-  chunkSize = 1;
-  chunkOffCount = 0;
-}
-
 void setChunks(int size, int off) {
   chunkSize = size;
   chunkOffCount = off;
+}
+
+void resetChunks() {
+  setChunks(1, 0);
 }
 
 // RANGES
@@ -182,6 +188,8 @@ void applyAll() {
 
 void applyDesklamp() {
   resetChunks();
+  resetBrightness();
+  setTopAnimation();
   setLEDSection(DESKLAMP2_R, DESKLAMP2_L);
   setLEDSection(DESKLAMP_R, DESKLAMP_L);
 }
@@ -195,7 +203,7 @@ void applyBottom() {
 }
 
 void applyLeft() {
-  setLEDSection(TOP_L, BOTTOM_L);
+  setLEDSection(TOP_L, BOTTOM_L); 
 }
 
 void applyRight() {
@@ -203,55 +211,21 @@ void applyRight() {
 }
 
 // PRESETS
+void standard(int withDesklamp) {
+  float mainBrightness = withDesklamp == 1 ? 0.2 : 0.3;
+
+  setBrightness(mainBrightness);
+  setChunks(2, 1);
+  applyAll();
+
+  if (withDesklamp == 1) {
+    applyDesklamp();
+  }
+}
+
 void whiteDesklamp() {
   setWhite();
   applyDesklamp();
-}
-
-void coldDesklamp() {
-  setCold();
-  applyDesklamp();
-}
-
-void redDesklamp() {
-  setRed();
-  applyDesklamp();
-}
-
-void warm() {
-  setWarm();
-  changeBrightness(0.3);
-  setChunks(2, 1);
-  applyAll();
-}
-
-void warmWithDesklamp() {
-  setWarm();
-  changeBrightness(0.2);
-  setChunks(2, 1);
-  applyAll();
-
-  setTopAnimation();
-  warmDesklamp();
-}
-
-void cold() {
-  setCold();
-  changeBrightness(0.3);
-  setChunks(2, 1);
-  applyAll();
-  resetChunks();
-}
-
-void coldWithDesklamp() {
-  setCold();
-  changeBrightness(0.1);
-  setChunks(2, 1);
-  applyAll();
-  resetChunks();
-
-  setTopAnimation();
-  coldDesklamp();
 }
 
 void lowRed() {
@@ -270,18 +244,17 @@ void redWithDesklamp() {
   resetChunks();
 
   setRed();
-  changeBrightness(0.1);
+  setBrightness(0.1);
   applyBottom();
 
-  setTopAnimation();
-  redDesklamp();
+  applyDesklamp();
 }
 
 // LOOP
 void loop() {
   if (digitalRead(BUTTON) == 0) {
     if (shouldIgnoreButton == 0) {
-      isLampOn = isLampOn == 0 ? 1 : 0;
+      isDesklampOn = isDesklampOn == 0 ? 1 : 0;
       shouldIgnoreButton = 1;
       shouldAnimateTop = 1;
       didChange = 1;
@@ -294,13 +267,13 @@ void loop() {
   int y = analogRead(Y_PIN);
 
   if (isPinLow(x) == 1) {
-    changeColor(COLOR_COLD);
+    setColor(COLOR_COLD);
   } else if (isPinHigh(x) == 1) {
-    changeColor(COLOR_WARM);
+    setColor(COLOR_WARM);
   } else if (isPinLow(y) == 1) {
-    changeColor(COLOR_RED);
+    setColor(COLOR_RED);
   } else if (isPinHigh(y) == 1) {
-    changeColor(COLOR_WHITE);
+    setColor(COLOR_WHITE);
   } else {
     shouldIgnorePin = 0;
   }
@@ -314,21 +287,15 @@ void loop() {
       whiteDesklamp();
       break;
     case COLOR_COLD:
-      if (isLampOn == 1) {
-        coldWithDesklamp();
-      } else {
-        cold();
-      }
+      setCold();
+      standard(isDesklampOn);
       break;
     case COLOR_WARM:
-      if (isLampOn == 1) {
-        warmWithDesklamp();
-      } else {
-        warm();
-      }
+      setWarm();
+      standard(isDesklampOn);
       break;
     case COLOR_RED:
-      if (isLampOn == 1) {
+      if (isDesklampOn == 1) {
         redWithDesklamp();
       } else {
         lowRed();
